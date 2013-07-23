@@ -74,6 +74,18 @@ public class CassetteRegistrations : Nancy.Extras.Cassette.Startup.CassetteRegis
 ```  
 4) Implement a helper and subclass `Nancy.Extras.Cassette.Startup.CassetteStartup` to get your custom helper to your view engine. Your helper will need access to `IPlaceholderTracker` for replacing Cassette's tokens with the correct url. Again I did this so there is no hard dependency on any view engine.
 ```
+public interface IBundlesHelper
+{
+    void Reference(string assetPathOrBundlePathOrUrl, string pageLocation = null);
+
+    IHtmlString RenderScripts(string pageLocation = null);
+
+    IHtmlString RenderStylesheets(string pageLocation = null);
+
+    string FileUrl(string bundlePath);
+    void AddInlineScript(string scriptContent, string pageLocation = null);
+    void AddInlineScript(Func<object, object> scriptContent, string pageLocation = null);
+}
 public class BundlesHelper : IBundlesHelper
 {
     private readonly IPlaceholderTracker placeholderTracker;
