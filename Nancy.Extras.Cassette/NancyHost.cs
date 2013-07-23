@@ -78,7 +78,7 @@ namespace Nancy.Extras.Cassette
 
         protected override IEnumerable<Assembly> LoadAssemblies()
         {
-            return AppDomain.CurrentDomain.GetAssemblies().Where(asm => asm.FullName.StartsWith("Cassette"));
+            return AppDomain.CurrentDomain.GetAssemblies();
         }
 
         protected override IConfiguration<CassetteSettings> CreateHostSpecificSettingsConfiguration()
