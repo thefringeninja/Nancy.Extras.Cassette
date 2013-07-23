@@ -4,7 +4,12 @@ namespace Nancy.Extras.Cassette.Startup
 {
     public static class CassetteConfiguration
     {
-        public static bool OptimizeOutput { get; set; }
+        private static bool? optimizeOutput;
+        public static bool OptimizeOutput
+        {
+            get { return optimizeOutput ?? (bool)(optimizeOutput = !StaticConfiguration.IsRunningDebug); }
+            set { optimizeOutput = value; }
+        }
 
         public static string ModulePath { get; set; }
 
