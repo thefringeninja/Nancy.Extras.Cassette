@@ -18,14 +18,9 @@ Eventually this will be available as a nuget packjage. The idea being you just i
     <CreateBundles Condition="'$(OutDir)' != '$(OutputPath)'"
       Output="$(OutDir)_PublishedWebsites\$(MSBuildProjectName)\cassette-cache" 
       Bin="$(OutDir)_PublishedWebsites\$(MSBuildProjectName)\bin" />
-    <CreateBundles Condition="'$(OutDir)' == '$(OutputPath)'" 
-      Output="$(OutputPath)\..\cassette-cache" 
-      Bin="$(OutputPath)" />
   </Target>
 </Project>
 ```  
-sadly this means no on the fly editing of assets, yet. I plan on adding this later.
-
 2) Implement `IConfiguration<BundleCollection>`
 
 3) Subclass  `Nancy.Extras.Cassette.Startup.CassetteRegistrations`. This is so we don't have a hard dependency on System.Web.
