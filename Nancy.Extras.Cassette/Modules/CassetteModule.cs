@@ -63,20 +63,10 @@ namespace Nancy.Extras.Cassette.Modules
             Get["/file/{path*}"]
                 = p =>
                 {
-                    string path = "~/" + p.path;
+                    string path = p.path;
 
-                    var match = Regex.Match(
-                        path, 
-                        "^(?<filename>.*)-[a-z0-9]+\\.(?<extension>[a-z]+)$",
-                        RegexOptions.IgnoreCase);
+                    var filePath = GetFilePath(rootPathProvider, path);
 
-                    if (false == match.Success)
-                    {
-                        return HttpStatusCode.NotFound;
-                    }
-
-                    var filePath = GetFilePath(rootPathProvider, match);
-            
                     if (false == File.Exists(filePath))
                     {
                         return HttpStatusCode.NotFound;
@@ -84,17 +74,23 @@ namespace Nancy.Extras.Cassette.Modules
 
                     var hash = hashAlgorithm.ComputeHash(File.ReadAllBytes(filePath));
 
-                    return HandleResourceRequest(() => File.OpenRead(filePath), MimeTypes.GetMimeType(filePath), hash);
+                    return HandleResourceRequest(() => File.OpenRead(filePath), MimeTypes.GetMimeType(filePath),
+                        hash);
                 };
         }
 
-        private static string GetFilePath(IRootPathProvider rootPathProvider, Match match)
+        private string GetFilePath(IRootPathProvider rootPathProvider, string path)
         {
-            var filePath = rootPathProvider.GetRootPath() + "\\"
-                           + match.Groups["filename"].Value.Replace('/', '\\') + "."
-                           + match.Groups["extension"].Value;
+            var match = Regex.Match(
+                path,
+                "^(?<filename>.*)-[a-z0-9]+\\.(?<extension>[a-z]+)$",
+                RegexOptions.IgnoreCase);
             
-            return Regex.Replace(filePath, "\\\\{2,}", "\\");
+            return false == match.Success
+                ? Path.Combine(rootPathProvider.GetRootPath(),  path.Replace('/', Path.DirectorySeparatorChar))
+                : Regex.Replace(rootPathProvider.GetRootPath() + "\\"
+                                + match.Groups["filename"].Value.Replace('/', '\\') + "."
+                                + match.Groups["extension"].Value, "\\\\{2,}", "\\");
         }
 
         private Response HandleResourceRequest(Func<Stream> resource, string contentType, IEnumerable<byte> hash = null)
