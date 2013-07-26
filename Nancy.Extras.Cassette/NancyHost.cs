@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Web.Configuration;
 using Cassette;
 using Cassette.IO;
 using Cassette.TinyIoC;
-using Nancy.Bootstrapper;
 using Nancy.Extras.Cassette.Startup;
 using IsolatedStorageFile = System.IO.IsolatedStorage.IsolatedStorageFile;
 

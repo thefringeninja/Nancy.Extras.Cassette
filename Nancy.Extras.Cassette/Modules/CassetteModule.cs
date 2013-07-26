@@ -56,7 +56,7 @@ namespace Nancy.Extras.Cassette.Modules
                         if (false == bundles.TryGetAssetByPath(path, out asset, out bundle))
                             return HttpStatusCode.NotFound;
 
-                        return HandleResourceRequest(asset.OpenStream, bundle.ContentType);
+                        return HandleResourceRequest(asset.OpenStream, bundle.ContentType, asset.Hash);
                     }
                 };
 
@@ -71,11 +71,7 @@ namespace Nancy.Extras.Cassette.Modules
                     {
                         return HttpStatusCode.NotFound;
                     }
-
-                    var hash = hashAlgorithm.ComputeHash(File.ReadAllBytes(filePath));
-
-                    return HandleResourceRequest(() => File.OpenRead(filePath), MimeTypes.GetMimeType(filePath),
-                        hash);
+                    return HandleResourceRequest(() => File.OpenRead(filePath), MimeTypes.GetMimeType(filePath));
                 };
         }
 
@@ -95,7 +91,7 @@ namespace Nancy.Extras.Cassette.Modules
 
         private Response HandleResourceRequest(Func<Stream> resource, string contentType, IEnumerable<byte> hash = null)
         {
-            var etag = GetETag(hash, resource);
+            var etag = GetETag(resource, hash);
             if (Request.Headers.IfNoneMatch.Contains(etag))
             {
                 return HttpStatusCode.NotModified;
@@ -106,7 +102,7 @@ namespace Nancy.Extras.Cassette.Modules
                 .WithHeader("Cache-Control", "public, max-age=31536000");
         }
 
-        private string GetETag(IEnumerable<byte> hash, Func<Stream> resource)
+        private string GetETag(Func<Stream> resource, IEnumerable<byte> hash = null)
         {
             if (hash != null) return "\"" + hash.ToHexString() + "\"";
             using (var stream = resource())

@@ -1,26 +1,35 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
+using System.Security.Authentication;
+using System.Security.Cryptography;
 using Cassette;
+using Cassette.IO;
 
 namespace Nancy.Extras.Cassette
 {
     public class UrlGenerator : IUrlGenerator
     {
+        private readonly IRootPathProvider rootPathProvider;
+
         private static readonly PropertyInfo urlProperty
             = typeof (Bundle).GetProperty("Url", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private readonly string cassetteHandlerPrefix;
+        private readonly IDirectory sourceDirectory;
         private readonly IUrlModifier urlModifier;
 
-        public UrlGenerator(IUrlModifier urlModifier, IHostCassette casseteHost)
-            : this(urlModifier, casseteHost.BasePath + "/")
+        public UrlGenerator(IUrlModifier urlModifier, IHostCassette casseteHost, IRootPathProvider rootPathProvider)
+            : this(urlModifier, casseteHost.BasePath + "/", new FileSystemDirectory(rootPathProvider.GetRootPath()))
         {
+            this.rootPathProvider = rootPathProvider;
         }
 
-        protected UrlGenerator(IUrlModifier urlModifier, string cassetteHandlerPrefix)
+        protected UrlGenerator(IUrlModifier urlModifier, string cassetteHandlerPrefix, IDirectory sourceDirectory)
         {
             this.urlModifier = urlModifier;
             this.cassetteHandlerPrefix = cassetteHandlerPrefix;
+            this.sourceDirectory = sourceDirectory;
         }
 
         #region IUrlGenerator Members
@@ -56,8 +65,17 @@ namespace Nancy.Extras.Cassette
         {
             if (!filename.StartsWith("~"))
                 throw new ArgumentException("Image filename must be application relative (starting with '~').");
-            var str = ConvertToForwardSlashes(filename).Substring(1);
-            return urlModifier.Modify(cassetteHandlerPrefix + "file" + str);
+
+            var file = sourceDirectory.GetFile(filename);
+            if (!file.Exists)
+            {
+                throw new FileNotFoundException("File not found: " + rootPathProvider.GetRootPath() + filename, filename);
+            } 
+            using (var hashAlgorithm = MD5.Create())
+            using (var stream = file.OpenRead())
+            {
+                return CreateRawFileUrl(filename, hashAlgorithm.ComputeHash(stream).ToHexString());
+            }
         }
 
         public string CreateAbsolutePathUrl(string applicationRelativePath)
